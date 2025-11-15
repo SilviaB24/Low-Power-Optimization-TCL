@@ -1,6 +1,6 @@
 # Low-Power Optimization Contest (TCL)
 
-This repository contains the algorithm and report for a low-power design contest. The goal was to write a **TCL script** to minimize leakage power in post-synthesis netlists while strictly adhering to timing constraints.
+This repository contains the algorithm and report for a for a **group project** submitted to a low-power design contest. The goal was to write a **TCL script** to minimize leakage power in post-synthesis netlists while strictly adhering to timing constraints.
 
 ## Project Goal
 
