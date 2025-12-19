@@ -1,25 +1,43 @@
-# Low-Power Optimization Contest (TCL)
+# Slack-Aware Leakage Power Optimizer
 
-This repository contains the algorithm and report for a low-power design contest. The goal was to write a **TCL script** to minimize leakage power in post-synthesis netlists while strictly adhering to timing constraints.
+This repository hosts a **TCL automation tool** designed to minimize leakage power in post-synthesis netlists using **Synopsys Design Compiler**.
+The algorithm intelligently swaps logic gates with High-Vt (Low Leakage) variants while strictly maintaining timing constraints (Zero Slack Violation).
 
-## Project Goal
+## 🚀 Key Results
+Tested on ISCAS-85 benchmarks (`c1908`), the tool achieved:
+* **Leakage Reduction:** **91.45%** (vs. baseline)
+* **Timing Violations:** **0** (Clean timing closure)
+* **Runtime:** Optimized via heuristic batch processing.
 
-The script optimizes a design by intelligently swapping logic gates with different threshold voltages (LVT, SVT, HVT). The challenge is to maximize leakage savings without violating the circuit's timing (slack).
+## ⚙️ Algorithm: Batch & Revert Heuristic
+Unlike standard greedy algorithms that update timing after every single cell swap (computationally expensive), this engine implements a **Batch & Revert** strategy:
 
-## Methodology
+1.  **Slack Sorting:** Cells are prioritized based on positive timing slack (`prioritize_cells_by_slack`).
+2.  **Adaptive Percentage:** The tool dynamically calculates how aggressive the optimization should be based on the average slack available (`decide_percentage`).
+3.  **Batch Execution:** Cells are swapped in batches (default: 15 cells). Timing is updated only once per batch to minimize runtime overhead.
+4.  **Smart Revert:** If a batch violates constraints, the engine automatically rolls back and switches to a fine-grained "cell-by-cell" mode for that specific cluster to maximize savings without breaking timing.
 
-The TCL script implements a heuristic-based, iterative approach:
+## 🛠️ Usage
+This script is designed to be sourced within the **Synopsys Design Compiler (dc_shell)** environment.
 
-1.  **Prioritization:** Cells are sorted by their timing slack in descending order. Only cells with positive slack are considered for swapping.
-2.  **Adaptive Swapping:** The algorithm calculates the average slack and dynamically decides what percentage of cells to swap (e.g., LVT -> SVT, SVT -> HVT).
-3.  **Group & Verify:** To save runtime, cells are swapped in batches. The script then checks if timing constraints (`work slack >= 0` and `maxPaths`) are still met. If a batch fails, it reverts and attempts to swap cell-by-cell.
-4.  **Iteration:** The process repeats, first swapping from LVT-to-SVT and then SVT-to-HVT, to progressively reduce leakage power.
+```tcl
+# Source the script in dc_shell
+source optimize_leakage.tcl
 
-## Key Result
+# Run the optimization command
+# Syntax: multiVth <slack_threshold> <max_violating_paths>
+multiVth 0.1 100
+```
 
-The algorithm was highly successful, achieving a **91.45% leakage power reduction** on the 'c1908' benchmark, far exceeding the contest goal.
+## 📊 Detailed Performance
 
-## Documentation
+| Benchmark | Clock (ns) | Slack Threshold | Leakage Savings |
+| --- | --- | --- | --- |
+| **c1908** | 2.0 | 0.10 | **91.45%** |
+| **c5315** | 2.0 | 0.10 | **90.22%** |
+| **c1908** | 1.0 (High Perf) | 0.01 | 15.29% |
 
-* [**View the Full Contest Report (Report.md)**](./Report.md)
-* [**View the TCL Script (optimize_leakage.tcl)**](./optimize_leakage.tcl)
+## 📂 File Structure
+
+* `optimize_leakage.tcl`: The core TCL algorithm containing the `multiVth` procedure and `swap` logic.
+* `Report.md`: Technical documentation detailing the heuristic approach and full benchmark tables.
